@@ -7,26 +7,55 @@
 Description
 
 ### Inputs
-#### `input`
+#### `file`
+File to get yaml properties from
+default: `serverless.yml`
+
+#### `role`
+Role suffix to assume
+Required property.
+
+#### `region`
+Region for deployment.
+Required property.
+
+#### `duration_seconds`
+Role assumption duration in seconds.
+default: `3600`
+
+#### `aws_access_key_id`
+AWS Access Key ID.  Pass in from a secret.
+Required property.
+
+#### `aws_secret_access_key`
+AWS Secret Acces Key.  Pass in from a secret.
+Required property.
+
+#### `role_skip_session_tagging`
+Whether to tag role session or not
+default: `true`
+
+#### `account_id`
+AWS account number.  Pass in from secrets.
+Required property.
 
 ### Outputs
-#### `result`
+#### `service`
+Output from [CumulusDS/get-yaml-paths-action][1] action
+
+[1]: https://github.com/CumulusDS/get-yaml-paths-action
 
 ### Example usage
 ```yaml
-      - name: cfn_nag_scan packaged template
-        id: scan-packaged
-        uses: CumulusDS/assume-role-action@v0.0.1
+      - name: Assume Role
+        id: role
+        uses: CumulusDS/assume-role-action@v1
         with:
-          input: some-input
-```
-
-The results can be later referenced again for use in a separate step if desired using the `results` output from the step.
-In order to reference the `result` output, you must assign and `id` to the step for future referencing.
-
-```yaml
-      - name: reprint results
-        run: echo "${{ steps.action.outputs.result }}"
+          role: "CI-User"
+          region: "${{ matrix.region }}"
+          account_id: ${{ secrets.ACCOUNT }}
+          aws_access_key_id: ${{ secrets.KEY_ID }}
+          aws_secret_access_key: ${{ secrets.ACCESS_KEY }}
 ```
 
 

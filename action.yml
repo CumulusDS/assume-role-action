@@ -2,7 +2,7 @@ name: 'assume-role-action'
 description: 'Composite action combining steps for assume role'
 inputs:
   file:
-    description: "description"
+    description: "File to get yaml properties from"
     required: false
     default: "serverless.yml"
   role:
@@ -12,7 +12,7 @@ inputs:
     description: "Region"
     required: true
   duration_seconds:
-    description: "Role Assumption Duration"
+    description: "Role Assumption Duration in seconds"
     required: false
     default: "3600"
   aws_access_key_id:
@@ -22,9 +22,11 @@ inputs:
     description: "Secret Access Key"
     required: true
   role_skip_session_tagging:
+    description: "Whether to tag role session or not"
     required: false
     default: "true"
   account_id:
+    description: "AWS Account #"
     required: true
 outputs:
   service:
@@ -50,14 +52,3 @@ runs:
         role-session-name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
         role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
         role-skip-session-tagging: ${{ inputs.role_skip_session_tagging }}
-#    - name: Assume ${{ inputs.role }} Role
-#      id: assume-role
-#      uses: youyo/awscredswrap@v1.0.1
-#      with:
-#        role_arn: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-#        duration_seconds: ${{ inputs.duration_seconds }}
-#        role_session_name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-#      env:
-#        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-#        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-#        AWS_DEFAULT_REGION: ${{ inputs.region }}
