@@ -17,15 +17,15 @@ inputs:
     default: "3600"
   aws_access_key_id:
     description: "Access Key ID"
-    required: false
-    default: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+    required: true
   aws_secret_access_key:
     description: "Secret Access Key"
-    required: false
-    default: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+    required: true
   role_skip_session_tagging:
     required: false
     default: "true"
+  account_id:
+    required: true
 outputs:
   service:
     description: "service"
@@ -39,7 +39,7 @@ runs:
       with:
         file: ${{ inputs.file }}
         service: service
-    - name: Assume Cucumber Role
+    - name: Assume ${{ inputs.role }} Role
       id: assume-role
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -48,7 +48,7 @@ runs:
         aws-region: ${{ inputs.region }}
         role-duration-seconds: ${{ inputs.duration_seconds }}
         role-session-name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-        role-to-assume: arn:aws:iam::${{ secrets.STS_DEV_AWS_ACCOUNT_ID }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+        role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
         role-skip-session-tagging: ${{ inputs.role_skip_session_tagging }}
 #    - name: Assume ${{ inputs.role }} Role
 #      id: assume-role
