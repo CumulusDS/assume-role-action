@@ -23,6 +23,9 @@ inputs:
     description: "Secret Access Key"
     required: false
     default: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+  role_skip_session_tagging:
+    required: false
+    default: "true"
 outputs:
   service:
     description: "service"
@@ -36,14 +39,25 @@ runs:
       with:
         file: ${{ inputs.file }}
         service: service
-    - name: Assume ${{ inputs.role }} Role
+    - name: Assume Cucumber Role
       id: assume-role
-      uses: youyo/awscredswrap@v1.0.1
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        role_arn: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-        duration_seconds: ${{ inputs.duration_seconds }}
-        role_session_name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-        AWS_DEFAULT_REGION: ${{ inputs.region }}
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
+        role-duration-seconds: ${{ inputs.duration_seconds }}
+        role-session-name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+        role-to-assume: arn:aws:iam::${{ secrets.STS_DEV_AWS_ACCOUNT_ID }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+        role-skip-session-tagging: ${{ inputs.role_skip_session_tagging }}
+#    - name: Assume ${{ inputs.role }} Role
+#      id: assume-role
+#      uses: youyo/awscredswrap@v1.0.1
+#      with:
+#        role_arn: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+#        duration_seconds: ${{ inputs.duration_seconds }}
+#        role_session_name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+#      env:
+#        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+#        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+#        AWS_DEFAULT_REGION: ${{ inputs.region }}
