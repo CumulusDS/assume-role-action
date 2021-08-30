@@ -1,26 +1,49 @@
-name: 'action-template'
-description: 'description'
+name: 'assume-role-action'
+description: 'Composite action combining steps for assume role'
 inputs:
-  input:
-    description: 'description'
+  file:
+    description: "description"
     required: false
-    default: ''
+    default: "serverless.yml"
+  role:
+    description: "Role suffix to assume"
+    required: true
+  region:
+    description: "Region"
+    required: true
+  duration_seconds:
+    description: "Role Assumption Duration"
+    required: false
+    default: "3600"
+  aws_access_key_id:
+    description: "Access Key ID"
+    required: false
+    default: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+  aws_secret_access_key:
+    description: "Secret Access Key"
+    required: false
+    default: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
 outputs:
-  result:
-    description: "results"
-    value: "${{ steps.action.outputs.result }}"
+  service:
+    description: "service"
+    value: "${{ steps.serverless.outputs.service }}"
 runs:
   using: "composite"
   steps:
-    - name: install cfn_nag_scan
-      id: install
-      run: |
-        echo "::group::Title"
-        echo "some message"
-        echo "::endgroup::"
-      shell: bash
-    - name: Print Output
-      id: print
-      run: |
-        echo "${{ steps.action.outputs.result }}"
-      shell: bash
+    - name: Get Serverless properties
+      id: serverless
+      uses: CumulusDS/get-yaml-paths-action@v0.1.1
+      with:
+        file: ${{ inputs.file }}
+        service: service
+    - name: Assume ${{ inputs.role }} Role
+      id: assume-role
+      uses: youyo/awscredswrap@v1.0.1
+      with:
+        role_arn: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+        duration_seconds: ${{ inputs.duration_seconds }}
+        role_session_name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_DEFAULT_REGION: ${{ inputs.region }}
