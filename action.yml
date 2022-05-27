@@ -28,6 +28,14 @@ inputs:
   account_id:
     description: "AWS Account #"
     required: true
+  hyphen:
+    description: "Whether or not to hyphenate the role name"
+    required: false
+    default: "true"
+  service:
+    description: "The service being deployed"
+    required: false
+    default: ""
 outputs:
   service:
     description: "service"
@@ -37,10 +45,29 @@ runs:
   steps:
     - name: Get Serverless properties
       id: serverless
+      if: inputs.service == ''
       uses: CumulusDS/get-yaml-paths-action@v0.1.1
       with:
         file: ${{ inputs.file }}
         service: service
+    - name: Hyphenate
+      id: hyphenate
+      run: |
+        echo "::group::RoleSessionName"
+        if [[ "${{ inputs.service }}" == "" ]]; then
+          service=${{ steps.serverless.outputs.service }}
+        else
+          service=${{ inputs.service }}
+        fi
+        if [[ "${{ inputs.hyphen }}" == "true" ]]; then
+          RoleSessionName=${service}-${{ inputs.role }}
+        else
+          RoleSessionName=${service}${{ inputs.role }}
+        fi
+        echo "ROLE_SESSION_NAME=$RoleSessionName" >> $GITHUB_ENV
+        echo "::endgroup::"
+        echo "RoleSessionName is ${RoleSessionName}"
+      shell: bash
     - name: Assume ${{ inputs.role }} Role
       id: assume-role
       uses: aws-actions/configure-aws-credentials@v1
@@ -49,6 +76,6 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
         aws-region: ${{ inputs.region }}
         role-duration-seconds: ${{ inputs.duration_seconds }}
-        role-session-name: ${{ steps.serverless.outputs.service }}-${{ inputs.role }}
-        role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/${{ steps.serverless.outputs.service }}-${{ inputs.role }}
+        role-session-name: ${{ env.ROLE_SESSION_NAME }}
+        role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/${{ env.ROLE_SESSION_NAME }}
         role-skip-session-tagging: ${{ inputs.role_skip_session_tagging }}
